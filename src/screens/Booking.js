@@ -86,7 +86,7 @@ const Booking = () => {
 
     sessionStorage.setItem("bookingDetails", JSON.stringify(bookingDetails));
     //console.log(bookingDetails.hotel);
-    navigate(`/hotel/${bookingDetails.hotel}`);
+    navigate(`/booking/payment`);
   };
 
   return (
