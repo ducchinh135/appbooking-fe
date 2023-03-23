@@ -9,6 +9,7 @@ import SignIn from "./screens/SignIn";
 import SignUp from "./screens/SignUp";
 import Account from "./screens/Account";
 import Bookings from "./screens/Bookings";
+import Payment from "./screens/Payment";
 import BookingSuccess from "./screens/BookingSuccess";
 import AllUsers from "./screens/AllUsers";
 import AllHotels from "./screens/AllHotels";
@@ -20,6 +21,8 @@ import ProtectedRoute from "./utils/ProtectedRoute";
 import { getUserAction } from "./redux/actions/userAction";
 import { setError, clearError, clearSuccess } from "./redux/slices/appSlice";
 import axios from "axios";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import BookingDetails from "./screens/BookingDetails";
 import { Alert, Snackbar } from "@mui/material";
 import UpdateHotel from "./screens/UpdateHotel";
@@ -31,11 +34,13 @@ import NotFound from "./screens/NotFound";
 import { HelmetProvider } from "react-helmet-async";
 
 const App = () => {
+  const [stripeApiKey, setStripeApiKey] = useState("");
   const isAuthenticated = useSelector(
     (state) => state.userState.isAuthenticated
   );
   const { error, success } = useSelector((state) => state.appState);
   const dispatch = useDispatch();
+  const [isStripeLoading, setStripeLoading] = useState(true);
   const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const CustomAlert = forwardRef((props, ref) => (
@@ -45,6 +50,23 @@ const App = () => {
   useEffect(() => {
     dispatch(getUserAction());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const getStripeApiKey = async () => {
+        try {
+          setStripeLoading(true);
+          const { data } = await axios.get("/api/v1/stripeapikey");
+          setStripeApiKey(data.stripeApiKey);
+          setStripeLoading(false);
+        } catch (err) {
+          dispatch(setError(err.response.data.message));
+          setStripeLoading(false);
+        }
+      };
+      getStripeApiKey();
+    }
+  }, [isAuthenticated, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -75,7 +97,18 @@ const App = () => {
             <Route path="/login" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/hotel/:id" element={<Hotel />} />
-
+            {!isStripeLoading && (
+              <Route
+                path="/booking/payment"
+                element={
+                  <ProtectedRoute>
+                    <Elements stripe={loadStripe(stripeApiKey)}>
+                      <Payment />
+                    </Elements>
+                  </ProtectedRoute>
+                }
+              />
+            )}
             <Route
               path="/room/:id/book"
               element={
