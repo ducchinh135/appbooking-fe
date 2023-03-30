@@ -101,7 +101,7 @@ const Navbar = () => {
                     <h2 className="capitalize text-xl font-semibold">
                       Hi, {user?.name}
                     </h2>
-                    <span>Email: {user.email}</span>
+                    <span>Email: {user?.email}</span>
                   </div>
                   <button
                     onClick={accountHandler}
